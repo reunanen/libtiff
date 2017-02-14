@@ -658,8 +658,10 @@ gtTileContig(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 	col = img->col_offset;
 	while (tocol < w)
         {
-	    if (TIFFReadTile(tif, buf, col,  
-			     row+img->row_offset, 0, 0)==(tmsize_t)(-1) && img->stoponerr)
+	    const int is_error = TIFFReadTile(tif, buf, col,
+			    row + img->row_offset, 0, 0)==(tmsize_t)(-1);
+
+	    if (is_error && img->stoponerr)
             {
                 ret = 0;
                 break;
@@ -675,7 +677,10 @@ gtTileContig(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 		this_tw = tw - fromskew;
 		this_toskew = toskew + fromskew;
 	    }
-	    (*put)(img, raster+y*w+tocol, tocol, y, this_tw, nrow, fromskew, this_toskew, buf + pos);
+	    if (!is_error)
+	    {
+	        (*put)(img, raster+y*w+tocol, tocol, y, this_tw, nrow, fromskew, this_toskew, buf + pos);
+	    }
 	    tocol += this_tw;
 	    col += this_tw;
 	    /*
